@@ -1,7 +1,11 @@
 name: Sync LeetCode Solutions
 
 on:
-  workflow_dispatch:        # Allow manual trigger
+  workflow_dispatch:    # Manual trigger
+  push:                 # Trigger on any push
+    branches:
+      - '**'
+
   schedule:
     - cron: "*/5 * * * *"   # Run every 5 minutes for testing
 
