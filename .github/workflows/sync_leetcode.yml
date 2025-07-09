@@ -3,7 +3,7 @@ name: Sync LeetCode Solutions
 on:
   workflow_dispatch:        # Manual trigger
   schedule:
-    - cron: "*/5 * * * *"   # Every 5 minutes
+    - cron: "0 3 * * *"   # Daily at 3 AM
   pull_request:
     branches:
       - main
