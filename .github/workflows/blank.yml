@@ -1,0 +1,41 @@
+]name: Sync LeetCode Solutions
+
+on:
+  workflow_dispatch:  # allows manual run
+  schedule:
+    - cron: "0 3 * * *"  # runs daily at 3 AM UTC (8:30 AM IST)
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install leetcode-cli gitpython
+
+      - name: Configure LeetCode CLI
+        run: |
+          leetcode user -l
+          leetcode config -s cookie.LEETCODE_SESSION ${{ secrets.LEETCODE_SESSION }}
+          leetcode config -s cookie.csrftoken ${{ secrets.LEETCODE_CSRF_TOKEN }}
+
+      - name: Fetch Accepted Solutions
+        run: |
+          leetcode dump -o solutions --only-accepted
+
+      - name: Commit & Push
+        run: |
+          git config --global user.name "leetcode-bot"
+          git config --global user.email "bot@example.com"
+          git add .
+          git commit -m "Auto-sync LeetCode solutions"
+          git push
