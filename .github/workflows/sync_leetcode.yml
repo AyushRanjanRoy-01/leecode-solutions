@@ -37,19 +37,20 @@ jobs:
         run: |
           mkdir -p solutions
 
-          leetcode show --all --format=json > all_solutions.json
+          leetcode list --status accepted --format json > all_solutions.json
 
-          jq -c '.stat_status_pairs[]' all_solutions.json | while read -r problem; do
+          jq -c '.problems[]' all_solutions.json | while read -r problem; do
             title_slug=$(echo "$problem" | jq -r '.stat.question__title_slug')
-            level=$(echo "$problem" | jq -r '.difficulty.level')
+            difficulty=$(echo "$problem" | jq -r '.difficulty')
             lang="python"  # or your preferred language
             file_ext="py"
 
             # Map difficulty level to folder
-            case $level in
-              1) folder="Easy";;
-              2) folder="Medium";;
-              3) folder="Hard";;
+            case "$difficulty" in
+              Easy|1) folder="Easy";;
+              Medium|2) folder="Medium";;
+              Hard|3) folder="Hard";;
+              *) folder="Unknown";;
             esac
 
             mkdir -p "solutions/$folder"
