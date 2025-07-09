@@ -55,10 +55,10 @@ jobs:
             mkdir -p "solutions/$folder"
 
             if [ ! -f "solutions/$folder/${title_slug}.${file_ext}" ]; then
-              echo "📥 Fetching $title_slug into $folder..."
+              echo "Fetching $title_slug into $folder..."
               leetcode show $title_slug --lang $lang > "solutions/$folder/${title_slug}.${file_ext}"
             else
-              echo "✅ Skipping $title_slug; already exists in $folder."
+              echo "Skipping $title_slug; already exists in $folder."
             fi
           done
 
@@ -68,8 +68,8 @@ jobs:
           git config --global user.email "bot@example.com"
           git add solutions/
           if git diff --cached --quiet; then
-            echo "✅ No new solutions to commit."
+            echo "No new solutions to commit."
           else
             git commit -m "Auto-sync LeetCode solutions"
             git push
-
+          fi
