@@ -1,23 +1,9 @@
 name: Sync LeetCode Solutions
 
 on:
-  # Manual trigger
-  workflow_dispatch:
-
-  # Schedule: daily at 3 AM UTC
+  workflow_dispatch:        # Allow manual trigger
   schedule:
-    - cron: "*/5 * * * *"
-
-  # Trigger on pull request events
-  pull_request:
-    branches:
-      - main  # Trigger when PR targets main branch
-    types: [opened, synchronize, reopened] # Also on updates to PRs
-
-  # Trigger when code is pushed to main after PR merge
-  push:
-    branches:
-      - main
+    - cron: "*/5 * * * *"   # Run every 5 minutes for testing
 
 jobs:
   sync:
@@ -32,24 +18,54 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install LeetCode CLI
+      - name: Install LeetCode CLI and jq
         run: |
           npm install -g leetcode-cli
+          sudo apt-get update && sudo apt-get install -y jq
 
       - name: Configure LeetCode CLI
         run: |
           leetcode user -c ${{ secrets.LEETCODE_SESSION }}
 
-      - name: Fetch Accepted Solutions
+      - name: Fetch Accepted Solutions and Organize
         run: |
           mkdir -p solutions
-          leetcode show --all --format=json > solutions/accepted.json
+
+          leetcode show --all --format=json > all_solutions.json
+
+          jq -c '.stat_status_pairs[]' all_solutions.json | while read -r problem; do
+            title_slug=$(echo "$problem" | jq -r '.stat.question__title_slug')
+            level=$(echo "$problem" | jq -r '.difficulty.level')
+            lang="python"  # Replace with your preferred language
+            file_ext="py"  # Adjust file extension if needed
+
+            # Map difficulty level to folder
+            case $level in
+              1) folder="Easy";;
+              2) folder="Medium";;
+              3) folder="Hard";;
+            esac
+
+            mkdir -p "solutions/$folder"
+
+            # Only fetch if file doesn't already exist
+            if [ ! -f "solutions/$folder/${title_slug}.${file_ext}" ]; then
+              echo "📥 Fetching $title_slug into $folder..."
+              leetcode show $title_slug --lang $lang > "solutions/$folder/${title_slug}.${file_ext}"
+            else
+              echo "✅ Skipping $title_slug; already exists in $folder."
+            fi
+          done
 
       - name: Commit & Push
         run: |
           git config --global user.name "leetcode-bot"
           git config --global user.email "bot@example.com"
           git add solutions/
-          git commit -m "Auto-sync LeetCode solutions"
-          git push || echo "No changes to commit"
+          if git diff --cached --quiet; then
+            echo "✅ No new solutions to commit."
+          else
+            git commit -m "Auto-sync LeetCode solutions"
+            git push
+          fi
 
