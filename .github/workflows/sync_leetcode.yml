@@ -36,6 +36,7 @@ jobs:
 
       - name: Fetch Accepted Solutions and Organize
         run: |
+          set -euo pipefail
           mkdir -p solutions
 
           leetcode list --status accepted --format json > all_solutions.json

@@ -30,6 +30,7 @@ jobs:
 
       - name: Fetch Accepted Solutions and Organize
         run: |
+          set -euo pipefail
           mkdir -p solutions
 
           echo "Fetching all accepted problems..."
