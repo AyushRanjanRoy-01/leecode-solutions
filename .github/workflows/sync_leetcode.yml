@@ -31,7 +31,8 @@ jobs:
 
       - name: Configure LeetCode CLI
         run: |
-          leetcode user -c ${{ secrets.LEETCODE_SESSION }}
+          leetcode config -s cookie.LEETCODE_SESSION=${{ secrets.LEETCODE_SESSION }}
+          leetcode config -s cookie.csrftoken=${{ secrets.LEETCODE_CSRF_TOKEN }}
 
       - name: Fetch Accepted Solutions and Organize
         run: |
