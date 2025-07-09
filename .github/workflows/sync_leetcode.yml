@@ -1,9 +1,9 @@
 name: Sync LeetCode Solutions
 
 on:
-  workflow_dispatch:  # allows manual run
+  workflow_dispatch:
   schedule:
-    - cron: "0 3 * * *"  # runs daily at 3 AM UTC (8:30 AM IST)
+    - cron: "0 3 * * *"  # daily at 3 AM UTC
 
 jobs:
   sync:
@@ -20,17 +20,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install leetcode-cli
+          python -m pip install --upgrade pip
+          pip install git+https://github.com/skygragon/leetcode-cli.git
+          echo "$(python -m site --user-base)/bin" >> $GITHUB_PATH
 
       - name: Configure LeetCode CLI
         run: |
-          leetcode config -s cookie.LEETCODE_SESSION ${{ secrets.LEETCODE_SESSION }}
-          leetcode config -s cookie.csrftoken ${{ secrets.LEETCODE_CSRF_TOKEN }}
+          python -m leetcode config -s cookie.LEETCODE_SESSION ${{ secrets.LEETCODE_SESSION }}
+          python -m leetcode config -s cookie.csrftoken ${{ secrets.LEETCODE_CSRF_TOKEN }}
 
       - name: Fetch Accepted Solutions
         run: |
           mkdir -p solutions
-          leetcode dump -o solutions --only-accepted
+          python -m leetcode dump -o solutions --only-accepted
 
       - name: Commit & Push
         run: |
