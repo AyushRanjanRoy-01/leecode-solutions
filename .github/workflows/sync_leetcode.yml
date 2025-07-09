@@ -1,13 +1,15 @@
 name: Sync LeetCode Solutions
 
 on:
-  workflow_dispatch:    # Manual trigger
-  push:                 # Trigger on any push
-    branches:
-      - '**'
-
+  workflow_dispatch:        # Manual trigger
   schedule:
-    - cron: "*/5 * * * *"   # Run every 5 minutes for testing
+    - cron: "*/5 * * * *"   # Every 5 minutes
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - '**'                # Trigger on any push to any branch
 
 jobs:
   sync:
@@ -40,8 +42,8 @@ jobs:
           jq -c '.stat_status_pairs[]' all_solutions.json | while read -r problem; do
             title_slug=$(echo "$problem" | jq -r '.stat.question__title_slug')
             level=$(echo "$problem" | jq -r '.difficulty.level')
-            lang="python"  # Replace with your preferred language
-            file_ext="py"  # Adjust file extension if needed
+            lang="python"  # or your preferred language
+            file_ext="py"
 
             # Map difficulty level to folder
             case $level in
@@ -52,7 +54,6 @@ jobs:
 
             mkdir -p "solutions/$folder"
 
-            # Only fetch if file doesn't already exist
             if [ ! -f "solutions/$folder/${title_slug}.${file_ext}" ]; then
               echo "📥 Fetching $title_slug into $folder..."
               leetcode show $title_slug --lang $lang > "solutions/$folder/${title_slug}.${file_ext}"
@@ -71,5 +72,4 @@ jobs:
           else
             git commit -m "Auto-sync LeetCode solutions"
             git push
-          fi
 
