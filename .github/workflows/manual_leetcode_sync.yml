@@ -1,0 +1,71 @@
+name: Manual LeetCode Sync
+
+on:
+  workflow_dispatch: # Trigger manually from GitHub Actions tab
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install LeetCode CLI and jq
+        run: |
+          echo "Installing LeetCode CLI and jq..."
+          npm install -g leetcode-cli
+          sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Configure LeetCode CLI
+        run: |
+          echo "Configuring LeetCode CLI with secrets..."
+          leetcode config -s cookie.LEETCODE_SESSION=${{ secrets.LEETCODE_SESSION }}
+          leetcode config -s cookie.csrftoken=${{ secrets.LEETCODE_CSRF_TOKEN }}
+
+      - name: Fetch Accepted Solutions and Organize
+        run: |
+          mkdir -p solutions
+
+          echo "Fetching all accepted problems..."
+          leetcode show --all --format=json > all_solutions.json
+
+          jq -c '.stat_status_pairs[]' all_solutions.json | while read -r problem; do
+            title_slug=$(echo "$problem" | jq -r '.stat.question__title_slug')
+            level=$(echo "$problem" | jq -r '.difficulty.level')
+            lang="python"  # Or your preferred language
+            file_ext="py"
+
+            case $level in
+              1) folder="Easy";;
+              2) folder="Medium";;
+              3) folder="Hard";;
+            esac
+
+            mkdir -p "solutions/$folder"
+
+            if [ ! -f "solutions/$folder/${title_slug}.${file_ext}" ]; then
+              echo "Fetching $title_slug into $folder..."
+              leetcode show $title_slug --lang $lang > "solutions/$folder/${title_slug}.${file_ext}"
+            else
+              echo "Skipping $title_slug; already exists in $folder."
+            fi
+          done
+
+      - name: Commit & Push
+        run: |
+          git config --global user.name "leetcode-bot"
+          git config --global user.email "bot@example.com"
+          git add solutions/
+          if git diff --cached --quiet; then
+            echo "No new solutions to commit."
+          else
+            git commit -m "Manual sync: LeetCode solutions"
+            git push
+          fi
+
